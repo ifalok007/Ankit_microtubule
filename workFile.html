@@ -96,15 +96,25 @@
     var Group = [];
     var sphere = [];
     var vector = [];
+    red = new THREE.Color(1, 0, 0);
+    green = new THREE.Color(0, 1, 0);
+    blue = new THREE.Color(0, 0, 1);
+    var colors = [red, green, blue];
 
     function initObject() {
+      var boxGeometry = new THREE.BoxGeometry(40, 40, 40);
+      for(var i =0;i<boxGeometry.faces.length;){
+        //console.log("box face "+(i+1));
+        boxGeometry.faces[i++].color.setHex( colors[1] );
+        boxGeometry.faces[i++].color.setHex( colors[1] );
+      }
       var box = new THREE.Mesh(
-				new THREE.BoxGeometry(40, 40, 40),
-				new THREE.MeshBasicMaterial({color:0XFF0000})
+			  boxGeometry,
+				new THREE.MeshBasicMaterial({color:0XFF0000, vertexColors: THREE.FaceColors})
 			)
-			//box.name = "box";
-            scene.add( box );
-			
+      
+			box.name = "box";
+      scene.add( box );
 			scene.add( new THREE.AxisHelper( 20 ) );
     }
 /*DAT-GUI code for control panel : start-here*/
@@ -114,7 +124,6 @@
       renderer.clear();
       renderer.render(scene, camera);
       controls.update();
-      for (var i = 0; i < Group.length; i++) {}
       requestAnimationFrame(animate);
     } 
 
