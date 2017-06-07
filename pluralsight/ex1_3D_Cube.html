@@ -1,0 +1,55 @@
+<html>
+	<head>
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+			#small-window {width: 200;height: 200px }
+		</style>
+	</head>
+	<body>
+		<div id="small-window"></div>
+		<script src="../lib/three.js/build/three.js"></script>
+		<script>
+			/* scene's main purpose as to act as container for light,camera and any object that we want to display.*/
+			var scene = new THREE.Scene();
+			/* In three.js there are 3 types of renderers
+					1. WebGL renderer (most common and performant and feature-rich)
+					2. canvas Renderer (provides fall-back for old browsers)
+					3. SVG Renderer (not part of core library)
+				renderer tells the browser how to render the object in browser by specifying the type of renderer to use.
+			 	Some of the renderers of Three.js can provide fall-back optionsfor browsers that dont support webGL.
+				 WebGLRenderer is most common and feature-rich and performance-rich renderer of all. */
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( 500, 500 );
+			document.querySelector("#small-window").appendChild( renderer.domElement );
+			/**/
+			//var light = THREE.AmbientLight(0Xff0000);
+			//scene.add(light);
+			/* In Three.js cameras are of two types 
+					1. Perspective Camera 
+					2. Autograhic camera
+				One can use multiple cameras in the same scene. 
+			*/
+			var camera = new THREE.PerspectiveCamera( 50, window.innerWidth/window.innerHeight, 1, 1000 );
+			
+
+			var box = new THREE.Mesh(
+				new THREE.BoxGeometry(20, 20, 20),
+				new THREE.MeshBasicMaterial({color:0XFF0000})
+			)
+			//box.name = "box";
+            scene.add( box );
+			
+			scene.add( new THREE.AxisHelper( 20 ) );
+
+
+			var render = function () {
+				renderer.render(scene, camera);
+				requestAnimationFrame( render );
+				//box.rotation.x += 0.1;
+			};
+			render();
+		</script>
+	</body>
+</html>

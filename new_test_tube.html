@@ -1,0 +1,453 @@
+<span style="background-color: rgb(255, 255, 255);"><!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Three.js draft</title>
+  <script src="Three.js"></script>
+  <script src="Controls/TrackballControls.js"></script>
+  <script src='Controls/DAT.GUI.min.js'></script>
+  <style type="text/css">
+    div#canvas-frame {
+      border: none;
+      cursor: auto;
+      width: 100%;
+      height: 100%;
+      background-color: #EEEEEE;
+    }
+  </style>
+  <script>
+    var renderer;
+
+    function initThree() {
+      width = document.getElementById('canvas-frame').clientWidth;
+      height = document.getElementById('canvas-frame').clientHeight;
+      renderer = new THREE.WebGLRenderer({
+        antialias: true
+      });
+      renderer.shadowMapEnabled = true;
+      renderer.setSize(width, height);
+      var last = new Date().getTime();
+      document.getElementById('canvas-frame').appendChild(renderer.domElement);
+      renderer.setClearColorHex(0x000000, 1.0);
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////
+    //    Camera Controls                                                           //
+    ////////////////////////////////////////////////////////////////////////////////// 
+    var camera;
+
+    function initCamera() {
+      camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+      camera.position.x = 1000;
+      camera.position.y = 0;
+      camera.position.z = 0;
+      camera.up.x = 0;
+      camera.up.y = 0;
+      camera.up.z = 1;
+      camera.lookAt({
+        x: 0,
+        y: 0,
+        z: 0
+      });
+
+      controls = new THREE.TrackballControls(camera);
+
+      controls.rotateSpeed = 2.0;
+      controls.zoomSpeed = 1.2;
+      controls.panSpeed = 0.8;
+
+      controls.noZoom = false;
+      controls.noPan = false;
+
+      controls.staticMoving = true;
+      controls.dynamicDampingFactor = 0.3;
+
+      controls.keys = [65, 83, 68];
+    }
+
+
+
+    var scene;
+
+    function initScene() {
+      scene = new THREE.Scene();
+      scene.updateMatrixWorld(true);
+      scene.add( new THREE.AxisHelper( 500 ) );
+    }
+    var light;
+
+
+    function initLight() {
+      light = new THREE.DirectionalLight(0xFFFFFF, 1.0, 0);
+      light.position.set(100, 100, 200);
+      light.castShadow = true;
+      scene.add(light);
+
+      light2 = new THREE.DirectionalLight(0xFFFFFF, 1.0, 0);
+      light2.position.set(-100, -100, -200);
+      light2.castShadow = true;
+      scene.add(light2);
+    }
+
+    var mouse = new THREE.Vector2(),
+      projector = new THREE.Projector(),
+      offset = new THREE.Vector3(),
+      INTERSECTED, SELECTED;
+
+
+
+
+    document.addEventListener('mousemove', onDocumentMouseMove, false);
+
+    document.addEventListener('mousedown', onDocumentMouseDown, false);
+    document.addEventListener('mouseup', onDocumentMouseUp, false);
+
+    function onDocumentMouseMove(event) {
+
+      event.preventDefault();
+
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      //
+
+      var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+      projector.unprojectVector(vector, camera);
+
+      var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+
+
+      if (SELECTED) {
+
+        var intersects = raycaster.intersectObject(plane);
+        SELECTED.position.copy(intersects[0].point.sub(offset));
+        return;
+
+      }
+
+
+      var intersects = raycaster.intersectObjects(Group, true);
+
+      if (intersects.length > 0) {
+
+        if (INTERSECTED != intersects[0].object.parent) {
+
+          if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+
+          INTERSECTED = intersects[0].object.parent;
+
+          plane.position.copy(INTERSECTED.position);
+          plane.lookAt(camera.position);
+
+        }
+
+
+      } else {
+
+        if (INTERSECTED)
+
+          INTERSECTED = null;
+
+
+      }
+
+    }
+
+    function onDocumentMouseDown(event) {
+
+      event.preventDefault();
+
+      var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+      projector.unprojectVector(vector, camera);
+
+      var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+
+      var intersects = raycaster.intersectObjects(Group, true);
+
+      if (intersects.length > 0) {
+
+        controls.enabled = false;
+
+        SELECTED = intersects[0].object.parent;
+
+        var intersects = raycaster.intersectObject(plane);
+        offset.copy(intersects[0].point).sub(plane.position);
+
+
+      }
+
+    }
+
+    function onDocumentMouseUp(event) {
+
+      event.preventDefault();
+
+      controls.enabled = true;
+
+      if (INTERSECTED) {
+
+        plane.position.copy(INTERSECTED.position);
+
+        SELECTED = null;
+
+      }
+
+
+    }
+
+    function checkExist(x, y, z) {
+      var trapNumber = 0;
+      for (var i = 0; i <= sphere.length - 2; i++) {
+        var Vlength = new THREE.Vector3(x - sphere[i].position.x, y - sphere[i].position.y, z - sphere[i].position.z);
+        if (Vlength.length() < 45) {
+          if (Vlength.length() < 35) {
+            return true;
+          } else {
+            trapNumber++;
+          }
+
+        } else if (trapNumber >= 4) {
+          return true;
+        } else if (z > 180 || z < -180) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+
+    var axis = new THREE.Vector3(0, 0, 1);
+    var faultCounter = 0;
+
+    function setPosition(sphere0, dice) {
+
+      var d2 = 3 * Math.random() + 1;
+      var dice2 = Math.round(d2);
+      switch (dice2) {
+        case 1:
+          var VC = new THREE.Vector3(sphere[dice].position.x, sphere[dice].position.y, sphere[dice].position.z);
+          var matrix = new THREE.Matrix4().makeRotationAxis(axis, Math.PI );
+          VC.applyMatrix4(matrix);
+          var x = VC.x;
+          var y = VC.y;
+          var z = VC.z;
+          if (checkExist(x, y, z)) {
+            if (faultCounter < 10) {
+              faultCounter++;
+              setPosition(sphere0, dice);
+
+            } else {
+              //                      var d3 = Math.random() * (2 *Group.length - 3) ;
+              //                      var dice = Math.round(d3);
+              faultCounter = 0;
+              //                      setPosition(sphere0,dice);
+              controlPanel.addDimers();
+            }
+          } else {
+            sphere0.position.set(x, y, z);
+            faultCounter = 0;
+          }
+          break;
+
+        case 2:
+          var VC = new THREE.Vector3(sphere[dice].position.x, sphere[dice].position.y, sphere[dice].position.z);
+          var matrix = new THREE.Matrix4().makeRotationAxis(axis, -Math.PI);
+          VC.applyMatrix4(matrix);
+          var x = VC.x;
+          var y = VC.y;
+          var z = VC.z;
+          if (checkExist(x, y, z)) {
+            if (faultCounter < 10) {
+              faultCounter++;
+              setPosition(sphere0, dice);
+
+            } else {
+              //                      var d3 = Math.random() * (2 *Group.length - 3) ;
+              //                      var dice = Math.round(d3);
+              faultCounter = 0;
+              //                      setPosition(sphere0,dice);
+              controlPanel.addDimers();
+            }
+          } else {
+            sphere0.position.set(x, y, z);
+            faultCounter = 0;
+          }
+          break;
+        case 3:
+          var x = sphere[dice].position.x;
+          var y = sphere[dice].position.y;
+          var z = sphere[dice].position.z - 40;
+          if (checkExist(x, y, z)) {
+            if (faultCounter < 10) {
+              faultCounter++;
+              setPosition(sphere0, dice);
+
+            } else {
+              //                      var d3 = Math.random() * (2 *Group.length - 3) ;
+              //                      var dice = Math.round(d3);
+              //                      faultCounter = 0;
+              //                      setPosition(sphere0,dice);
+              faultCounter = 0;
+              controlPanel.addDimers();
+            }
+
+          } else {
+            sphere0.position.set(x, y, z);
+            faultCounter = 0;
+          }
+          break;
+
+        case 4:
+          var x = sphere[dice].position.x;
+          var y = sphere[dice].position.y;
+          var z = sphere[dice].position.z + 40;
+          if (checkExist(x, y, z)) {
+            if (faultCounter < 10) {
+              faultCounter++;
+              setPosition(sphere0, dice);
+
+            } else {
+              //                      var d3 = Math.random() * (2 *Group.length - 3) ;
+              //                      var dice = Math.round(d3);
+              faultCounter = 0;
+              //                      setPosition(sphere0,dice);
+              controlPanel.addDimers();
+            }
+
+          } else {
+            sphere0.position.set(x, y, z);
+            faultCounter = 0;
+          }
+          break;
+      }
+    }
+
+
+
+
+
+    var Group = [];
+    var sphere = [];
+    var vector = [];
+
+    function initObject() {
+      plane = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000, 8, 8), new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        opacity: 0.25,
+        transparent: true,
+        wireframe: true
+      }));
+      plane.lookAt(camera.position);
+      plane.visible = false;
+      scene.add(plane);
+      sphere[0] = new THREE.Mesh(
+        new THREE.SphereGeometry(20, 50, 50),
+        new THREE.MeshLambertMaterial({
+          color: 0xffff00
+        })
+
+      );
+      vector[0] = new THREE.Vector3();
+
+      sphere[1] = new THREE.Mesh(
+        new THREE.SphereGeometry(20, 50, 50),
+        new THREE.MeshLambertMaterial({
+          color: 0xff0000
+        })
+
+      );
+      vector[1] = new THREE.Vector3();
+
+      sphere[0].position.set(20 / (Math.tan(Math.PI / 22)), -20, 0);
+      sphere[1].position.set(20 / (Math.tan(Math.PI / 22)), 20, 0);
+
+      dimer = new THREE.Object3D();
+      dimer.add(sphere[0]);
+      dimer.add(sphere[1]);
+      Group.push(dimer);
+      scene.add(Group[0]);
+    }
+/*DAT-GUI code for control panel : start-here*/
+    var k = 2;
+    var kk = 1;
+    var controlPanel = new function() {
+      this.addDimers = function() {
+
+        if (Group.length < 30) {
+          var d = Math.random() * (2 * Group.length - 1);
+          var dice = Math.round(d);
+        } else if (Group.length < 60) {
+          var d = Math.random() * ((2 * Group.length) - 31);
+          var dice = Math.round(d);
+        } else if (Group.length < 90) {
+          var d = Math.random() * ((2 * Group.length) - 81);
+          var dice = Math.round(d);
+        }
+
+
+        sphere[k] = new THREE.Mesh(
+          new THREE.SphereGeometry(20, 50, 50),
+          new THREE.MeshLambertMaterial({
+            color: 0xffff00
+          })
+        );
+        vector[k] = new THREE.Vector3();
+
+        sphere[k + 1] = new THREE.Mesh(
+          new THREE.SphereGeometry(20, 50, 50),
+          new THREE.MeshLambertMaterial({
+            color: 0xff0000
+          })
+        );
+        vector[k + 1] = new THREE.Vector3();
+
+        if (dice % 2 == 0) {
+          setPosition(sphere[k + 1], dice);
+          setPosition(sphere[k], k + 1);
+        } else {
+          setPosition(sphere[k], dice);
+          setPosition(sphere[k + 1], k);
+        }
+        scene.add(sphere[k]);
+        scene.add(sphere[k + 1]);
+        dimer2 = new THREE.Object3D();
+        dimer2.add(sphere[k]);
+        dimer2.add(sphere[k + 1]);
+        Group.push(dimer2);
+        scene.add(Group[kk]);
+        kk++;
+        k += 2;
+      }
+    }
+
+
+    var gui = new dat.GUI({
+      width: 160
+    });
+    gui.add(controlPanel, 'addDimers');
+/*DAT-GUI code for control panel : end-here*/
+    function animate() {
+      renderer.clear();
+      renderer.render(scene, camera);
+      controls.update();
+      for (var i = 0; i < Group.length; i++) {}
+      requestAnimationFrame(animate);
+    }
+
+    function threeStart() {
+      initThree();
+      initCamera();
+      initScene();
+      initLight();
+      initObject();
+      animate();
+    }
+  </script>
+</head>
+
+<body onload="threeStart();">
+  <div id="canvas-frame"></div>
+</body>
+
+</html></span>
