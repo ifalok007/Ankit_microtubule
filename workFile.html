@@ -29,7 +29,7 @@
       renderer.setSize(width, height);
       var last = new Date().getTime();
       document.getElementById('canvas-frame').appendChild(renderer.domElement);
-      renderer.setClearColorHex(0x000000, 1.0);
+      renderer.setClearColor(0x000000, 0.5);
     }
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -74,20 +74,32 @@
       scene = new THREE.Scene();
       scene.updateMatrixWorld(true);
       scene.add( new THREE.AxisHelper( 500 ) );
+      var planeGeometry = new THREE.PlaneGeometry(300, 300);
+      var planeMaterial = new THREE.MeshBasicMaterial({color: 0xAAAAAA});
+      var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+      // rotate and position the plane
+      plane.rotation.x = 0;
+      plane.position.x = 0;
+      plane.position.y = 0;
+      plane.position.z = 0;
+      plane.receiveShadow = true;
+      // add the plane to the scene
+      scene.add(plane);
     }
     var light;
 
 
     function initLight() {
       light = new THREE.DirectionalLight(0xFFFFFF, 1.0, 0);
-      light.position.set(100, 100, 200);
+      light.position.set(100, 100, 100);
       light.castShadow = true;
       scene.add(light);
 
-      light2 = new THREE.DirectionalLight(0xFFFFFF, 1.0, 0);
-      light2.position.set(-100, -100, -200);
-      light2.castShadow = true;
-      scene.add(light2);
+      //  light2 = new THREE.DirectionalLight(0xFFFFFF, 1.0, 0);
+      //  light2.position.set(-100, -100, -200);
+      //  light2.castShadow = true;
+      //  scene.add(light2);
     }
 
 
@@ -102,22 +114,38 @@
     var colors = [red, green, blue];
 
     function initObject() {
-      var boxGeometry = new THREE.BoxGeometry(40, 40, 40);
-      for(var i =0;i<boxGeometry.faces.length;){
-        //console.log("box face "+(i+1));
-        boxGeometry.faces[i++].color.setHex( colors[1] );
-        boxGeometry.faces[i++].color.setHex( colors[1] );
+      var radius = 30;
+      var theta = 0;
+      var flag = true;
+      for(var j=0;j<100;j=j+20){
+        var red = 0xFF0000;
+        var yellow = 0xFFFF00;
+        if(flag){
+          color = yellow;
+        }else{
+          color = red;
+        }
+        for(var i=0;i<20;i++){
+          var sphereGeometry = new THREE.SphereGeometry(10,30,30);
+          var sphere = new THREE.Mesh(
+			      sphereGeometry,
+				    new THREE.MeshLambertMaterial({color: color})
+			    );
+          theta = theta + 360/30;
+          var x = radius*Math.cos(theta);
+          var y = radius*Math.sin(theta);
+          var z = j+30;
+          sphere.position.set(x,y,z);
+          sphere.castShadow = true;
+          scene.add( sphere );
+        }
+        flag = !flag;
       }
-      var box = new THREE.Mesh(
-			  boxGeometry,
-				new THREE.MeshBasicMaterial({color:0XFF0000, vertexColors: THREE.FaceColors})
-			)
-      
-			box.name = "box";
-      scene.add( box );
+			//sphere.name = "sphere";
+      //scene.add( sphere );
 			scene.add( new THREE.AxisHelper( 20 ) );
     }
-/*DAT-GUI code for control panel : start-here*/
+    /*DAT-GUI code for control panel : start-here*/
 
     /*DAT-GUI code for control panel : end-here*/
     function animate() {
