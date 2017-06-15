@@ -114,33 +114,95 @@
     var colors = [red, green, blue];
 
     function initObject() {
-      var radius = 30;
+      var radius = 50;
       var theta = 0;
       var flag = true;
-      for(var j=0;j<100;j=j+20){
+      //for(var j=0;j<100;j=j+20){
         var red = 0xFF0000;
         var yellow = 0xFFFF00;
-        if(flag){
-          color = yellow;
-        }else{
-          color = red;
-        }
-        for(var i=0;i<20;i++){
-          var sphereGeometry = new THREE.SphereGeometry(10,30,30);
-          var sphere = new THREE.Mesh(
-			      sphereGeometry,
-				    new THREE.MeshLambertMaterial({color: color})
-			    );
-          theta = theta + 360/30;
-          var x = radius*Math.cos(theta);
-          var y = radius*Math.sin(theta);
-          var z = j+30;
-          sphere.position.set(x,y,z);
-          sphere.castShadow = true;
-          scene.add( sphere );
-        }
+           // ES6 Math polyfill
+      var tanh = Math.tanh || function tanh(x) {
+          return (Math.exp(x) - Math.exp(-x)) / (Math.exp(x) + Math.exp(-x));
+      }; 
+      var cosh = Math.cosh || function cosh(x) {
+        return (Math.exp(x) + Math.exp(-x)) / 2;
+      }; 
+      var sinh = Math.sinh || function sinh(x) {
+        return (Math.exp(x) - Math.exp(-x)) / 2;
+      };
+      // sphere spiral
+      var sz = 16, cxy = 100, cz = cxy * sz;
+      var hxy = Math.PI / cxy;
+      var hz = Math.PI / cz;
+      var r = 50;
+      for (var i = -cz; i < cz; i++) {
+         if(flag){
+             color = yellow;
+           }else{
+             color = red;
+           }
+        var lxy = i * hxy;
+        var lz = i * hz;
+        var rxy = r;
+        var x = rxy * Math.cos(lxy);
+        var y = rxy * Math.sin(lxy);
+        var z = r * tanh(lz);
+        var sphereGeometry = new THREE.SphereGeometry(0.5);
+        var sphere = new THREE.Mesh(
+			    sphereGeometry,
+          new THREE.MeshLambertMaterial({color: color})
+        );
+        sphere.position.set(x,y,z);
+        sphere.castShadow = true;
+        scene.add( sphere );
         flag = !flag;
       }
+        // j=0;
+        // var interval = setInterval(function(){
+        //   if(j>=50){
+        //     clearInterval(interval);
+        //   }
+        //   if(flag){
+        //     color = yellow;
+        //   }else{
+        //     color = red;
+        //   }
+        //   var sphereGeometry = new THREE.SphereGeometry(10);
+        //   var sphere = new THREE.Mesh(
+			  //     sphereGeometry,
+				//     new THREE.MeshLambertMaterial({color: color})
+			  //   );
+        //   theta = theta + Math.PI/11;
+        //   var x = radius*Math.cos(-theta);
+        //   var y = radius*Math.sin(-theta);
+        //   var z = ++j;
+        //   sphere.position.set(x,y,z);
+        //   sphere.castShadow = true;
+        //   scene.add( sphere );
+        //   flag = !flag;
+        // },400);
+        // for(var i=0;i<50;i++){
+        //   if(flag){
+        //     color = yellow;
+        //   }else{
+        //     color = red;
+        //   }
+        //   var sphereGeometry = new THREE.SphereGeometry(10);
+        //   var sphere = new THREE.Mesh(
+			  //     sphereGeometry,
+				//     new THREE.MeshLambertMaterial({color: color})
+			  //   );
+        //   theta = theta + Math.PI/11;
+        //   var x = radius*Math.cos(-theta);
+        //   var y = radius*Math.sin(-theta);
+        //   var z = ++j;
+        //   sphere.position.set(x,y,z);
+        //   sphere.castShadow = true;
+        //   scene.add( sphere );
+        //   flag = !flag;
+        // }
+        
+      //}
 			//sphere.name = "sphere";
       //scene.add( sphere );
 			scene.add( new THREE.AxisHelper( 20 ) );
